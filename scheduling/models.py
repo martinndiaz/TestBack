@@ -3,7 +3,7 @@ from doctors.models import Kinesiologist
 from users.models import Patient
 from django.core.exceptions import ValidationError
 
-# Create your models here.
+
 class Availability(models.Model):
     DAYS = [
         (0, 'Lunes'),
