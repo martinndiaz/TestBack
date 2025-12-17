@@ -35,8 +35,13 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
 
         return patient
     
-    
-    
+class PatientProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+
+    class Meta:
+        model = Patient
+        fields = ["name", "rut", "phone_number", "email"]
+
 
 class PatientLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()

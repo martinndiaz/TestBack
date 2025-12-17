@@ -8,12 +8,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from datetime import datetime, timedelta
 from rest_framework.permissions import AllowAny
+from datetime import date
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
 
 
 
 
 
+from users.models import Patient
 from doctors.models import Kinesiologist
 from .models import Appointment, Availability
 from .serializers import (
@@ -236,3 +239,35 @@ class KinesiologistAvailableSlotsView(APIView):
 
         serializer = TimeSlotSerializer(slots, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def patient_appointments_history(request):
+    patient = Patient.objects.get(user=request.user)
+
+    qs = (
+        Appointment.objects
+        .filter(patient_name=patient)
+        .select_related("kinesiologist__user")
+        .order_by("-date", "-start_time")
+    )
+
+    today = date.today()
+    data = []
+
+    for a in qs:
+        status = "completed" if a.date < today else "pending"
+
+        data.append({
+            "id": a.id,
+            "date": a.date.strftime("%Y-%m-%d"),
+            "time": a.start_time.strftime("%H:%M"),
+            "treatment": "Sesión de kinesiología",
+            "kinesiologist": a.kinesiologist.user.get_full_name()
+                or a.kinesiologist.user.username,
+            "status": status,
+        })
+
+    return Response(data)
